@@ -124,9 +124,10 @@ proto.animateInFromTarget = function(e) {
 
     background.style.transform += ' scale(' + scale + ')';
     background.style.opacity = 1;
+  }, background, end).then(() => {
     this.els.window.classList.add('animate-in');
     this.dispatch('animationend');
-  }, background, end);
+  });
 };
 
 proto.animateOut = function(callback) {
