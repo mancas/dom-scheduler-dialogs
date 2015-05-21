@@ -141,20 +141,30 @@ proto.animateOut = function(callback) {
     background: this.els.background.classList
   };
 
-  window.maestro.transition(() =>  {
-    this.dispatch('animationstart');
-    classes.window.add('animate-out');
-  }, this.els.window, end).then(() => {
-    window.maestro.transition(() => {
+  window.maestro.multipleTransitions([
+  {
+    block: () =>  {
+      this.dispatch('animationstart');
+      classes.window.add('animate-out');
+    },
+    elm: this.els.window,
+    evt: end
+  },
+  {
+    block: () => {
       classes.background.add('animate-out');
-    }, self.els.background, end).then(() => {
-      classes.window.remove('animate-out', 'animate-in');
-      classes.background.remove('animate-out', 'animate-in');
-      background.classList.remove('circular');
-      background.style = '';
-      self.dispatch('animationend');
-      if (callback) { callback(); }
-    });
+    },
+    elm: this.els.background,
+    evt: end
+  }]).then(() => {
+    classes.window.remove('animate-out', 'animate-in');
+    classes.background.remove('animate-out', 'animate-in');
+    background.classList.remove('circular');
+    background.style = '';
+    self.dispatch('animationend');
+    if (callback) { callback(); }
+  }).catch(err => {
+    console.error(err);
   });
 };
 
