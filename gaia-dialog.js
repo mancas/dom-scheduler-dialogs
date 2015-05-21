@@ -100,10 +100,9 @@ proto.animateIn = function(e) {
   this.dispatch('animationstart');
   window.maestro.transition(() => {
     this.els.background.classList.add('animate-in');
-  },this.els.background, 'animationend').then(() => {
     self.els.window.classList.add('animate-in');
     self.dispatch('animationend');
-  });
+  }, this.els.background, 'animationend');
 };
 
 proto.animateInFromTarget = function(e) {
@@ -125,10 +124,9 @@ proto.animateInFromTarget = function(e) {
 
     background.style.transform += ' scale(' + scale + ')';
     background.style.opacity = 1;
-  }, background, end).then(() => {
-    self.els.window.classList.add('animate-in');
-    self.dispatch('animationend');
-  });
+    this.els.window.classList.add('animate-in');
+    this.dispatch('animationend');
+  }, background, end);
 };
 
 proto.animateOut = function(callback) {
