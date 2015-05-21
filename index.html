@@ -43,7 +43,11 @@
     <div class="l-mb-small"><gaia-button data-for="gaia-dialog-select">Select</gaia-button></div>
     <div class="l-mb-small"><gaia-button data-for="gaia-dialog-select[multiple]">Select Multiple</gaia-button></div>
     <div class="l-mb-small"><gaia-button data-for="gaia-dialog-menu">Menu</gaia-button></div>
-    <div class="l-mb-small"><gaia-button data-for="#custom-dialog-1">Custom</gaia-button></div>
+    <div class="l-mb-mega"><gaia-button data-for="#custom-dialog-1">Custom</gaia-button></div>
+  </div>
+
+  <div>
+    <div class=""><gaia-button data-enabled="false">Enable naive mode</gaia-button></div>
   </div>
 
   <div id="dialogs">
@@ -118,8 +122,16 @@
     var buttons = document.querySelectorAll('gaia-button');
     [].forEach.call(buttons, function(button) {
       button.addEventListener('click', function(e) {
-        var dialog = document.querySelector(button.dataset.for);
-        dialog.open(e);
+        if (button.dataset.for) {
+          var dialog = document.querySelector(button.dataset.for);
+          dialog.open(e);
+        } else if (button.dataset.enabled) {
+          var enabled = button.dataset.enabled === 'true' ? true : false;
+          window.maestro.naive = !enabled;
+          button.dataset.enabled = !enabled;
+          button.textContent = !enabled ? 'Disable naive mode' :
+            'Enable naive mode';
+        }
       });
     });
   </script>
