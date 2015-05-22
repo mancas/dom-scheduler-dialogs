@@ -77,7 +77,6 @@ proto.styleHack = function() {
 
 proto.open = function(options) {
   if (this.isOpen) { return; }
-  console.info(this);
   this.animateIn(options);
   this.isOpen = true;
   this.setAttribute('opened', '');
@@ -122,7 +121,6 @@ proto.animateIn = function(e) {
 };
 
 proto.animateInFromTarget = function(e) {
-  console.info(this);
   var pos = e.touches && e.touches[0] || e;
   var scale = Math.sqrt(innerWidth * innerHeight) / 10;
   var background = this.els.background;
