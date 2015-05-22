@@ -30,15 +30,18 @@ var proto = GaiaDialog.extend();
 proto.createdCallback = function() {
   this.onCreated();
 
-  this.els.submit = this.shadowRoot.querySelector('.submit');
-  this.els.cancel = this.shadowRoot.querySelector('.cancel');
-  this.els.list = this.shadowRoot.querySelector('ul');
+  Promise.all([this._waitForScheduler, this._waitForShadowRoot]).then(() => {
+    this.els.submit = this.shadowRoot.querySelector('.submit');
+    this.els.cancel = this.shadowRoot.querySelector('.cancel');
+    this.els.list = this.shadowRoot.querySelector('ul');
 
-  this.multiple = this.hasAttribute('multiple');
+    this.multiple = this.hasAttribute('multiple');
 
-  on(this.els.list, 'click', this.onListClick, this);
-  on(this.els.submit, 'click', this.close, this);
-  on(this.els.cancel, 'click', this.close, this);
+    on(this.els.list, 'click', this.onListClick, this);
+    on(this.els.submit, 'click', this.close, this);
+    on(this.els.cancel, 'click', this.close, this);
+  });
+
 };
 
 proto.onListClick = function(e) {

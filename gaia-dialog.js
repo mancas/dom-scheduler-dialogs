@@ -15,6 +15,19 @@ var innerHTML = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
 var removeAttribute = proto.removeAttribute;
 var setAttribute = proto.setAttribute;
 var has = Object.prototype.hasOwnProperty;
+// Shared instance
+var _scheduler = null;
+
+Object.defineProperty(proto, 'scheduler', {
+  get: function() { return _scheduler; },
+  set: function(scheduler) {
+    _scheduler = scheduler;
+    // Maybe could it be a race condition?
+    this._resolve && this._resolve();
+  }
+});
+
+proto._waitForShadowRoot = null;
 
 /**
  * Runs when an instance of `GaiaTabs`
@@ -26,18 +39,20 @@ var has = Object.prototype.hasOwnProperty;
  * @private
  */
 proto.createdCallback = function() {
-  window.maestro.mutation(() => {
-    this.createShadowRoot().innerHTML = template;
+  createWaitForSchedulerPromise.apply(this);
+  this._waitForScheduler.then(() => {
+    this._waitForShadowRoot = this.scheduler.mutation(() => {
+      this.createShadowRoot().innerHTML = template;
+      this.els = {
+        inner: this.shadowRoot.querySelector('.dialog-inner'),
+        background: this.shadowRoot.querySelector('.background'),
+        window: this.shadowRoot.querySelector('.window')
+      };
 
-    this.els = {
-      inner: this.shadowRoot.querySelector('.dialog-inner'),
-      background: this.shadowRoot.querySelector('.background'),
-      window: this.shadowRoot.querySelector('.window')
-    };
-
-    this.shadowRoot.addEventListener('click', e => this.onClick(e));
-    this.setupAnimationListeners();
-    this.styleHack();
+      this.shadowRoot.addEventListener('click', e => this.onClick(e));
+      this.setupAnimationListeners();
+      this.styleHack();
+    });
   });
 };
 
@@ -62,6 +77,7 @@ proto.styleHack = function() {
 
 proto.open = function(options) {
   if (this.isOpen) { return; }
+  console.info(this);
   this.animateIn(options);
   this.isOpen = true;
   this.setAttribute('opened', '');
@@ -106,6 +122,7 @@ proto.animateIn = function(e) {
 };
 
 proto.animateInFromTarget = function(e) {
+  console.info(this);
   var pos = e.touches && e.touches[0] || e;
   var scale = Math.sqrt(innerWidth * innerHeight) / 10;
   var background = this.els.background;
@@ -526,6 +543,18 @@ var animations = `
   }
 })();
 
+function createWaitForSchedulerPromise() {
+  // Check if parentNode is a webComponent in order to use its waitFor promise
+  this._waitForScheduler = this.parentNode.host &&
+    this.parentNode.host._waitForScheduler ?
+    this.parentNode.host._waitForScheduler :
+    new Promise((resolve, reject) => {
+      this._resolve = resolve;
+      // Maybe could it be a race condition?
+      this.scheduler && this._resolve();
+    });
+}
+
 
 // Register and expose the constructor
 try {
@@ -544,18 +573,22 @@ try {
 var extended = {
   onCreated: function() {
     var self = this;
-    window.maestro.mutation(() => {
-      this.createShadowRoot().innerHTML = this.template;
-      this.els = { dialog: this.shadowRoot.querySelector('gaia-dialog') };
-      this.setupAnimationListeners();
-      this.styleHack();
+    createWaitForSchedulerPromise.apply(this);
 
-      this.els.dialog.addEventListener('opened', function() {
-        setAttribute.call(self, 'opened', '');
-      });
+    this._waitForScheduler.then(() => {
+      this.scheduler.mutation(() => {
+        this.createShadowRoot().innerHTML = this.template;
+        this.els = { dialog: this.shadowRoot.querySelector('gaia-dialog') };
+        this.setupAnimationListeners();
+        this.styleHack();
 
-      this.els.dialog.addEventListener('closed', function() {
-        removeAttribute.call(self, 'opened');
+        this.els.dialog.addEventListener('opened', function() {
+          setAttribute.call(self, 'opened', '');
+        });
+
+        this.els.dialog.addEventListener('closed', function() {
+          removeAttribute.call(self, 'opened');
+        });
       });
     });
   },

@@ -22,8 +22,10 @@ var proto = GaiaDialog.extend();
  */
 proto.createdCallback = function() {
   this.onCreated();
-  this.els.submit = this.shadowRoot.querySelector('.submit');
-  this.els.submit.addEventListener('click', this.close.bind(this));
+  Promise.all([this._waitForScheduler, this._waitForShadowRoot]).then(() => {
+    this.els.submit = this.shadowRoot.querySelector('.submit');
+    this.els.submit.addEventListener('click', this.close.bind(this));
+  });
 };
 
 proto.template = `

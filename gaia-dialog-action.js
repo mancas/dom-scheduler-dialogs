@@ -26,21 +26,23 @@ var proto = GaiaDialog.extend();
  */
 proto.createdCallback = function() {
   this.onCreated();
-  this.els.cancel = this.shadowRoot.querySelector('.cancel');
-  this.els.cancel.addEventListener('click', this.close.bind(this));
+  Promise.all([this._waitForScheduler, this._waitForShadowRoot]).then(() => {
+    this.els.cancel = this.shadowRoot.querySelector('.cancel');
+    this.els.cancel.addEventListener('click', this.close.bind(this));
 
-  // Just for testing purpose
-  var contents = this.els.dialog.querySelectorAll('content');
-  Array.prototype.forEach.call(contents, content => {
-    var nodes = content.getDistributedNodes();
-    Array.prototype.forEach.call(nodes, node => {
-      if (node.nodeName !== 'BUTTON') {
-        return;
-      }
+    // Just for testing purpose
+    var contents = this.els.dialog.querySelectorAll('content');
+    Array.prototype.forEach.call(contents, content => {
+      var nodes = content.getDistributedNodes();
+      Array.prototype.forEach.call(nodes, node => {
+        if (node.nodeName !== 'BUTTON') {
+          return;
+        }
 
-      var method = node.dataset.click;
-      node.addEventListener('click', this[method] ? this[method].bind(this) :
-        this.close.bind(this));
+        var method = node.dataset.click;
+        node.addEventListener('click', this[method] ? this[method].bind(this) :
+          this.close.bind(this));
+      });
     });
   });
 };
