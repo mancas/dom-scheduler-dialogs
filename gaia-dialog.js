@@ -114,7 +114,7 @@ proto.animateIn = function(e) {
 
   var self = this;
   this.dispatch('animationstart');
-  window.maestro.transition(() => {
+  this.scheduler.transition(() => {
     this.els.background.classList.add('animate-in');
     self.els.window.classList.add('animate-in');
     self.dispatch('animationend');
@@ -130,7 +130,7 @@ proto.animateInFromTarget = function(e) {
   var end = 'transitionend';
   var self = this;
 
-  window.maestro.transition(() =>  {
+  this.scheduler.transition(() =>  {
     background.style.transform = 'translate(' + pos.clientX + 'px, ' +
       pos.clientY + 'px)';
     background.style.transitionDuration = duration + 'ms';
@@ -157,7 +157,7 @@ proto.animateOut = function(callback) {
     background: this.els.background.classList
   };
 
-  window.maestro.multipleTransitions([
+  this.scheduler.multipleTransitions([
   {
     block: () =>  {
       this.dispatch('animationstart');
