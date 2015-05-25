@@ -47,7 +47,7 @@
   </div>
 
   <div>
-    <div class=""><gaia-button data-enabled="false">Enable naive mode</gaia-button></div>
+    <div class=""><gaia-button data-enabled="false" data-scheduler="gaia-dialog-alert">Enable naive mode</gaia-button></div>
   </div>
 
   <div id="dialogs">
@@ -127,7 +127,8 @@
           dialog.open(e);
         } else if (button.dataset.enabled) {
           var enabled = button.dataset.enabled === 'true' ? true : false;
-          window.maestro.naive = !enabled;
+          var dialog = document.querySelector(button.dataset.scheduler);
+          dialog.scheduler.naive = !enabled;
           button.dataset.enabled = !enabled;
           button.textContent = !enabled ? 'Disable naive mode' :
             'Enable naive mode';

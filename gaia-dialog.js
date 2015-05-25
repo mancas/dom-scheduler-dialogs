@@ -22,12 +22,56 @@ Object.defineProperty(proto, 'scheduler', {
   get: function() { return _scheduler; },
   set: function(scheduler) {
     _scheduler = scheduler;
-    // Maybe could it be a race condition?
-    this._resolve && this._resolve();
   }
 });
 
-proto._waitForShadowRoot = null;
+function createShadowRoot() {
+  this.createShadowRoot().innerHTML = this.template;
+  this.els = { dialog: this.shadowRoot.querySelector('gaia-dialog') };
+  this.setupAnimationListeners();
+  this.styleHack();
+
+  this.els.dialog.addEventListener('opened', () => {
+    setAttribute.call(this, 'opened', '');
+  });
+
+  this.els.dialog.addEventListener('closed', () => {
+    removeAttribute.call(this, 'opened');
+  });
+}
+
+function createInnerShadowRoot() {
+  this.createShadowRoot().innerHTML = template;
+  this.els = {
+    inner: this.shadowRoot.querySelector('.dialog-inner'),
+    background: this.shadowRoot.querySelector('.background'),
+    window: this.shadowRoot.querySelector('.window')
+  };
+
+  this.shadowRoot.addEventListener('click', e => this.onClick(e));
+  this.setupAnimationListeners();
+  this.styleHack();
+}
+
+proto.attachBehavior = function(scheduler) {
+  if (!scheduler) {
+    scheduler = new DomScheduler();
+    scheduler.naive = true;
+  }
+
+  this.scheduler = scheduler;
+
+  if (this.nodeName !== 'GAIA-DIALOG') {
+    this.scheduler.mutation(createShadowRoot.bind(this)).then(() => {
+      var gaiaDialog = this.shadowRoot.querySelector('gaia-dialog');
+      createInnerShadowRoot.bind(gaiaDialog)();
+      this.customAttachBehavior && this.customAttachBehavior();
+    });
+  } else {
+    this.scheduler.mutation(createInnerShadowRoot.bind(this)).then(
+      this.customAttachBehavior ? this.customAttachBehavior : null);
+  }
+};
 
 /**
  * Runs when an instance of `GaiaTabs`
@@ -39,21 +83,6 @@ proto._waitForShadowRoot = null;
  * @private
  */
 proto.createdCallback = function() {
-  createWaitForSchedulerPromise.apply(this);
-  this._waitForScheduler.then(() => {
-    this._waitForShadowRoot = this.scheduler.mutation(() => {
-      this.createShadowRoot().innerHTML = template;
-      this.els = {
-        inner: this.shadowRoot.querySelector('.dialog-inner'),
-        background: this.shadowRoot.querySelector('.background'),
-        window: this.shadowRoot.querySelector('.window')
-      };
-
-      this.shadowRoot.addEventListener('click', e => this.onClick(e));
-      this.setupAnimationListeners();
-      this.styleHack();
-    });
-  });
 };
 
 proto.onClick = function(e) {
@@ -155,30 +184,20 @@ proto.animateOut = function(callback) {
     background: this.els.background.classList
   };
 
-  this.scheduler.multipleTransitions([
-  {
-    block: () =>  {
+  this.scheduler.transition(() =>  {
       this.dispatch('animationstart');
       classes.window.add('animate-out');
-    },
-    elm: this.els.window,
-    evt: end
-  },
-  {
-    block: () => {
+  }, this.els.window, end).then(() => {
+    this.scheduler.transition(() => {
       classes.background.add('animate-out');
-    },
-    elm: this.els.background,
-    evt: end
-  }]).then(() => {
-    classes.window.remove('animate-out', 'animate-in');
-    classes.background.remove('animate-out', 'animate-in');
-    background.classList.remove('circular');
-    background.style = '';
-    self.dispatch('animationend');
-    if (callback) { callback(); }
-  }).catch(err => {
-    console.error(err);
+    }, this.els.background, end).then(() => {
+      classes.window.remove('animate-out', 'animate-in');
+      classes.background.remove('animate-out', 'animate-in');
+      background.classList.remove('circular');
+      background.style = '';
+      self.dispatch('animationend');
+      if (callback) { callback(); }
+    });
   });
 };
 
@@ -541,19 +560,6 @@ var animations = `
   }
 })();
 
-function createWaitForSchedulerPromise() {
-  // Check if parentNode is a webComponent in order to use its waitFor promise
-  this._waitForScheduler = this.parentNode.host &&
-    this.parentNode.host._waitForScheduler ?
-    this.parentNode.host._waitForScheduler :
-    new Promise((resolve, reject) => {
-      this._resolve = resolve;
-      // Maybe could it be a race condition?
-      this.scheduler && this._resolve();
-    });
-}
-
-
 // Register and expose the constructor
 try {
   module.exports = document.registerElement('gaia-dialog', { prototype: proto });
@@ -570,25 +576,6 @@ try {
 
 var extended = {
   onCreated: function() {
-    var self = this;
-    createWaitForSchedulerPromise.apply(this);
-
-    this._waitForScheduler.then(() => {
-      this.scheduler.mutation(() => {
-        this.createShadowRoot().innerHTML = this.template;
-        this.els = { dialog: this.shadowRoot.querySelector('gaia-dialog') };
-        this.setupAnimationListeners();
-        this.styleHack();
-
-        this.els.dialog.addEventListener('opened', function() {
-          setAttribute.call(self, 'opened', '');
-        });
-
-        this.els.dialog.addEventListener('closed', function() {
-          removeAttribute.call(self, 'opened');
-        });
-      });
-    });
   },
 
   open: function(e) {

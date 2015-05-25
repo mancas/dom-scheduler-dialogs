@@ -9,7 +9,7 @@
             'gaia-dialog-alert, gaia-dialog-confirm, gaia-dialog-prompt,' +
             'gaia-dialog-action, gaia-dialog-select, gaia-dialog-menu');
         Array.prototype.forEach.call(gaiaDialogElements, elm => {
-            elm.scheduler = scheduler;
+            elm.attachBehavior(scheduler);
         });
       });
   });
