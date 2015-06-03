@@ -317,7 +317,7 @@ var template = `
 
 .background.animate-in {
   animation-name: gaia-dialog-fade-in;
-  animation-duration: 300ms;
+  animation-duration: 150ms;
   animation-fill-mode: forwards;
 }
 
@@ -327,8 +327,8 @@ var template = `
 
 .background.animate-out {
   animation-name: gaia-dialog-fade-out;
-  animation-delay: 300ms;
-  animation-duration: 300ms;
+  animation-delay: 150ms;
+  animation-duration: 150ms;
   animation-fill-mode: forwards;
   opacity: 1;
 }
@@ -348,15 +348,15 @@ var template = `
 
 .window.animate-in {
   animation-name: gaia-dialog-entrance;
-  animation-duration: 300ms;
+  animation-duration: 150ms;
   animation-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.275);
   animation-fill-mode: forwards;
 }
 
 .window.animate-out {
   animation-name: gaia-dialog-fade-out;
-  animation-duration: 200ms;
-  animation-delay: 100ms;
+  animation-duration: 100ms;
+  animation-delay: 50ms;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
   opacity: 1;
